@@ -53,7 +53,7 @@ final class FocusPanelAnimationTests: XCTestCase {
         let suite = "FocusPanelAnimationMenuTests.\(UUID())"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         let controller = FocusController(store: FocusStore(defaults: defaults))
-        let panel = FocusPanel(controller: controller, screenFrame: CGRect(x: 0, y: 0, width: 800, height: 900), applicationScreen: { nil })
+        let panel = FocusPanel(controller: controller, screenFrame: CGRect(x: 0, y: 0, width: 800, height: 900), applicationScreen: { nil }, reduceMotion: { false })
         panel.makeKeyAndOrderFront(nil)
         let menu = makeSettingsMenu(controller)
         defer { menu.orderOut(nil); panel.orderOut(nil); defaults.removePersistentDomain(forName: suite) }
