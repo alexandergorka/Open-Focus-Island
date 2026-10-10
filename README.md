@@ -1,8 +1,68 @@
-# Open Focus Island
+<p align="center">
+  <img src="docs/images/banner.jpg" alt="Open Focus Island — a native macOS focus timer that lives in your notch" width="100%">
+</p>
 
-Open Focus Island is a native macOS focus timer with a compact top-of-screen control and a menu-bar entry.
+<p align="center">
+  <a href="https://github.com/alexandergorka/Open-Focus-Island/actions/workflows/ci.yml"><img src="https://github.com/alexandergorka/Open-Focus-Island/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+  <img src="https://img.shields.io/badge/SwiftUI-%2B%20AppKit-0A84FF" alt="SwiftUI + AppKit">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/alexandergorka/Open-Focus-Island?color=32D158" alt="MIT License"></a>
+  <a href="https://github.com/alexandergorka/Open-Focus-Island/issues"><img src="https://img.shields.io/github/issues/alexandergorka/Open-Focus-Island" alt="Open issues"></a>
+  <a href="https://github.com/alexandergorka/Open-Focus-Island/stargazers"><img src="https://img.shields.io/github/stars/alexandergorka/Open-Focus-Island?style=flat" alt="GitHub stars"></a>
+</p>
 
-## Current features
+<p align="center">
+  <b>Open Focus Island</b> is a native macOS Pomodoro timer with a compact island at the top of the screen and a menu-bar entry.<br>
+  On MacBooks with a notch, the island attaches to the notch. Everything stays on your Mac: no account, no telemetry, no network.
+</p>
+
+<p align="center">
+  <img src="docs/images/hero.jpg" alt="Open Focus Island with the notch timer, the floating controls, the menu-bar popover and the history window" width="100%">
+</p>
+
+## Highlights
+
+- 🏝️ **Lives in the notch.** A slim status strip next to the notch shows the countdown. Click to expand it, or drag the dot to detach the panel.
+- ⏱️ **Classic Pomodoro.** 25 / 5 / 15 minutes by default, all configurable. After four full focus sessions the app suggests a long break.
+- 📝 **Optional task names** and a live **History** window of completed focus sessions.
+- 🔔 **Opt-in** notifications and completion sounds. Both are off by default.
+- 🌍 **English and Deutsch.** Switching language takes effect immediately, without a relaunch.
+- 💤 **Survives sleep and relaunch.** Remaining time is calculated from timestamps, not from a ticking counter.
+- 🔒 **Private by design.** Settings, the current session and history are stored locally in `UserDefaults`.
+
+## Screenshots
+
+| Compact notch status | Expanded notch timer |
+|:---:|:---:|
+| <img src="docs/images/notch-compact.jpg" alt="Compact notch status" width="420"> | <img src="docs/images/notch-timer.jpg" alt="Expanded notch timer" width="420"> |
+| **Floating controls** (no notch, or notch mode off) | **History** |
+| <img src="docs/images/panel-controls.jpg" alt="Floating timer controls" width="420"> | <img src="docs/images/history.jpg" alt="History window" width="420"> |
+
+<p align="center">
+  <img src="docs/images/menu-settings.jpg" alt="Menu-bar popover with settings" width="420"><br>
+  <sub>Menu-bar popover with settings</sub>
+</p>
+
+## Installation
+
+There is no signed release yet, so you build the app yourself. It takes about a minute.
+
+**Requirements:** macOS 14 or later, and a Swift 6 toolchain (Xcode or the Xcode command-line tools).
+
+```sh
+git clone https://github.com/alexandergorka/Open-Focus-Island.git
+cd Open-Focus-Island
+./scripts/build-app.sh
+open ".build/Open Focus Island.app"
+```
+
+To keep it, copy `.build/Open Focus Island.app` to `/Applications`.
+
+## Features in detail
+
+<details>
+<summary>Show the full feature list</summary>
 
 - Start a focus or break session, with an optional task name.
 - Expand the compact island to pause, resume, finish, or skip to a break.
@@ -27,27 +87,43 @@ The compact, timer and controls views share one animated background. Contents ar
 
 The menu-bar popover grows and shrinks with its settings form. Oversized floating timer controls remain scrollable within the available screen area. Dragging from the status dot preserves the position on the same display and resets it when the active app moves to another display. Notched displays have connected compact-status, timer and controls views; the status distinguishes running, the last minute, paused and completed sessions.
 
-The UI split preserves the panel animations and completion sounds. The integrated suite passes 183 tests; its local release passes signature, bundle and audio checks. Tests cover real AppKit/SwiftUI hosting windows, settings interactions and persistence, history lifecycle/live updates, rendered interpolation, rapid reversals and reduced motion. The restarted main app confirms the simplified controls, collapse and Escape. Earlier native QA covered notch expansion, drag detachment, display switching and sound completion. The new system popover and history focus still require final native verification; physical display unplugging, VoiceOver and actual sleep/wake remain unverified. F1/B5 assets, backward-compatible settings and completion playback are independently reviewed. Both sounds and their manifest are included before signing and audited from the final app bundle. Perceived audibility and subjective sound quality remain unverified. Apple Focus automation is deferred in `TODO.md`.
+</details>
 
-## Requirements
-
-- macOS 14 or later
-- Swift 6 toolchain (Xcode command-line tools or Xcode)
-
-## Build, test, and run locally
+## Development
 
 ```sh
 swift build
-swift test
-./scripts/build-app.sh
-./scripts/check-app-bundle.sh
-open ".build/Open Focus Island.app"
+swift test                      # 183 tests: FocusCore logic plus real AppKit/SwiftUI hosting windows
+./scripts/build-app.sh          # release build → .build/Open Focus Island.app (ad-hoc signed)
+./scripts/check-app-bundle.sh   # verifies bundle structure, plist, icon, signature and bundled sounds
 ```
 
-`build-app.sh` creates an app bundle for the current machine in `.build/Open Focus Island.app`. The script builds the release executable, includes the app icon and selected completion sounds with their manifest, sets bundle version `0.1.0` / build `1`, and applies an ad-hoc local signature. `check-app-bundle.sh` checks the bundle structure, plist values, icon format, signature, and the bundled sounds’ hashes, decoded audio and technical limits.
+| Path | Contents |
+|---|---|
+| `Sources/FocusCore` | Foundation-only value types: sessions, settings, persistence, notch and panel geometry |
+| `Sources/OpenFocusIsland` | SwiftUI views, the observable controller, and AppKit panel and system integration |
+| `Tests/` | `FocusCoreTests` (logic) and `FocusAppTests` (rendered UI, interaction, sound and notification policy) |
+| `scripts/` | App bundle build and audit, plus the icon and sound generators |
+| `Assets/` | App icon and the synthesized completion sounds with their manifest |
 
-The ad-hoc signature is for local use. This project has not been signed with an Apple Developer ID or notarized for distribution. No public release or Homebrew Cask is provided. Licensed under the [MIT License](LICENSE).
+`build-app.sh` builds the release executable, includes the app icon and the completion sounds with their manifest, sets bundle version `0.1.0` / build `1`, and applies an ad-hoc local signature.
+
+Some tests render real windows and need a logged-in macOS session. Notch-specific tests are skipped on displays without a notch.
+
+## Project status
+
+Open Focus Island is an early MVP (`0.1.0`).
+
+- The ad-hoc signature is for local use only. The app is not signed with an Apple Developer ID or notarized, and there is no public release or Homebrew Cask yet.
+- Not yet verified on real hardware: physical display unplugging, VoiceOver, and actual sleep/wake. Subjective sound quality has not been evaluated either.
+- Planned: automatic Apple Focus ("Do Not Disturb") integration, see [`TODO.md`](TODO.md).
+
+Bug reports and ideas are welcome in the [issue tracker](https://github.com/alexandergorka/Open-Focus-Island/issues).
 
 ## Product direction
 
 The app is an original implementation and uses its own name, icon, layout, copy, and code. It does not include accounts, telemetry, network access, cloud sync, music controls, dictation, translation, calendar, weather, system HUDs, AI progress, app blocking, or device sync.
+
+## License
+
+[MIT](LICENSE) © 2026 Alexander Gorka

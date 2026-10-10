@@ -1,0 +1,47 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start a focus session
+        2. Click the notch status
+        3. ...
+  - type: dropdown
+    id: display
+    attributes:
+      label: Display
+      options:
+        - Built-in display with notch
+        - Built-in display without notch
+        - External display
+        - Multiple displays
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: e.g. 26.0
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: App version or commit
+      placeholder: e.g. 0.1.0 or a1b2c3d
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or recordings
+      description: Drag images or videos in here if they help.
