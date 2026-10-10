@@ -192,8 +192,11 @@ final class FocusPanel: NSPanel {
                 self.updateExpandedContentSize(CGSize(width: size.width, height: size.height + bridgeHeight))
             },
             onTimerContentSize: { [weak self] size in
-                guard let self, self.metrics.presentation == .timer else { return }
-                self.updateContentSize(size, animated: true)
+                // Die Messung kommt synchron aus setFrame, noch mit dem alten Viewport (zu klein); erst nach dem Resize und nie währenddessen übernehmen.
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.metrics.presentation == .timer, self.resizeTarget == nil else { return }
+                    self.updateContentSize(size, animated: true)
+                }
             }
         ))
         hostingView.sizingOptions = [] // The panel owns its canvas size, including during transitions.
