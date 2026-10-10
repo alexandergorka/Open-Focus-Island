@@ -1,6 +1,6 @@
 cask "open-focus-island" do
   version "0.1.0"
-  sha256 :no_check # Set by the release workflow.
+  sha256 "5ff7029a3a2239bce6944b789ac9b94f3f0963afe65b1c4c536ee4861bb33c7c"
 
   url "https://github.com/alexandergorka/Open-Focus-Island/releases/download/v#{version}/Open-Focus-Island-#{version}.zip"
   name "Open Focus Island"
