@@ -7,9 +7,9 @@
   <img src="https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
   <img src="https://img.shields.io/badge/SwiftUI-%2B%20AppKit-0A84FF" alt="SwiftUI + AppKit">
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/alexandergorka/Open-Focus-Island?color=32D158" alt="MIT License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/alexandergorka/Open-Focus-Island?color=32D158&cacheSeconds=3600" alt="MIT License"></a>
   <a href="https://github.com/alexandergorka/Open-Focus-Island/issues"><img src="https://img.shields.io/github/issues/alexandergorka/Open-Focus-Island" alt="Open issues"></a>
-  <a href="https://github.com/alexandergorka/Open-Focus-Island/stargazers"><img src="https://img.shields.io/github/stars/alexandergorka/Open-Focus-Island?style=flat" alt="GitHub stars"></a>
+  <a href="https://github.com/alexandergorka/Open-Focus-Island/stargazers"><img src="https://img.shields.io/github/stars/alexandergorka/Open-Focus-Island?style=flat&cacheSeconds=3600" alt="GitHub stars"></a>
 </p>
 
 <p align="center">
