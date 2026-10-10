@@ -46,9 +46,26 @@
 
 ## Installation
 
-There is no signed release yet, so you build the app yourself. It takes about a minute.
+**Requirements:** macOS 14 or later. The app is universal (Apple Silicon and Intel).
 
-**Requirements:** macOS 14 or later, and a Swift 6 toolchain (Xcode or the Xcode command-line tools).
+### Homebrew
+
+```sh
+brew tap alexandergorka/open-focus-island https://github.com/alexandergorka/Open-Focus-Island
+brew install --cask alexandergorka/open-focus-island/open-focus-island
+```
+
+### Download
+
+Get the latest `Open-Focus-Island-<version>.zip` from [Releases](https://github.com/alexandergorka/Open-Focus-Island/releases/latest), unzip it, and move **Open Focus Island.app** to `/Applications`.
+
+> [!IMPORTANT]
+> Open Focus Island is not notarized by Apple yet, so macOS blocks the first launch.
+> Open **System Settings → Privacy & Security** and click **Open Anyway**. You only need to do this once.
+
+### Build from source
+
+You need Swift 6 (Xcode or the Xcode command-line tools).
 
 ```sh
 git clone https://github.com/alexandergorka/Open-Focus-Island.git
@@ -56,8 +73,6 @@ cd Open-Focus-Island
 ./scripts/build-app.sh
 open ".build/Open Focus Island.app"
 ```
-
-To keep it, copy `.build/Open Focus Island.app` to `/Applications`.
 
 ## Features in detail
 
@@ -105,16 +120,21 @@ swift test                      # 183 tests: FocusCore logic plus real AppKit/Sw
 | `Tests/` | `FocusCoreTests` (logic) and `FocusAppTests` (rendered UI, interaction, sound and notification policy) |
 | `scripts/` | App bundle build and audit, plus the icon and sound generators |
 | `Assets/` | App icon and the synthesized completion sounds with their manifest |
+| `Casks/` | Homebrew cask, updated automatically on release |
 
-`build-app.sh` builds the release executable, includes the app icon and the completion sounds with their manifest, sets bundle version `0.1.0` / build `1`, and applies an ad-hoc local signature.
+`build-app.sh` builds the release executable, includes the app icon and the completion sounds with their manifest, sets the bundle version from `APP_VERSION` (default `0.1.0`), and applies an ad-hoc local signature. `UNIVERSAL=1` builds for Apple Silicon and Intel (requires Xcode).
 
 Some tests render real windows and need a logged-in macOS session. Notch-specific tests are skipped on displays without a notch.
+
+### Releasing
+
+Push a version tag, for example `git tag v0.2.0 && git push origin v0.2.0`. The [release workflow](.github/workflows/release.yml) builds the universal app, publishes a GitHub release with the zip, and updates `Casks/open-focus-island.rb` on `main`.
 
 ## Project status
 
 Open Focus Island is an early MVP (`0.1.0`).
 
-- The ad-hoc signature is for local use only. The app is not signed with an Apple Developer ID or notarized, and there is no public release or Homebrew Cask yet.
+- Releases are ad-hoc signed, not signed with an Apple Developer ID or notarized. That's why macOS asks you to confirm the first launch.
 - Not yet verified on real hardware: physical display unplugging, VoiceOver, and actual sleep/wake. Subjective sound quality has not been evaluated either.
 - Planned: automatic Apple Focus ("Do Not Disturb") integration, see [`TODO.md`](TODO.md).
 

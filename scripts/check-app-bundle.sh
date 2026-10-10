@@ -33,8 +33,8 @@ if [[ -f "$info" ]]; then
     expect_plist CFBundleIdentifier org.openfocusisland.app
     expect_plist CFBundlePackageType APPL
     expect_plist CFBundleIconFile AppIcon
-    expect_plist CFBundleShortVersionString 0.1.0
-    expect_plist CFBundleVersion 1
+    expect_plist CFBundleShortVersionString "${APP_VERSION:-0.1.0}"
+    expect_plist CFBundleVersion "${APP_VERSION:-0.1.0}"
     expect_plist LSUIElement true
 fi
 
