@@ -9,6 +9,7 @@ final class FocusController: ObservableObject {
     @Published private(set) var history: [FocusHistoryEntry] = []
     @Published private(set) var now: Date
     @Published private(set) var error: String?
+    @Published private(set) var awaitingAcknowledgement: FocusSession.Kind?
 
     private let store: FocusStore
     private let clock: () -> Date
@@ -38,9 +39,12 @@ final class FocusController: ObservableObject {
             error = settings.language.t("Session could not be started.", "Sitzung konnte nicht gestartet werden.")
             return
         }
+        awaitingAcknowledgement = nil
         persistSession()
         syncNotification()
     }
+
+    func acknowledgeCompletion() { awaitingAcknowledgement = nil }
 
     func pause() {
         let actionTime = tick()
@@ -72,6 +76,7 @@ final class FocusController: ObservableObject {
             longDuration: settings.longBreakDuration,
             at: actionTime
         ) else { return }
+        awaitingAcknowledgement = nil
         if !completedNaturally { cancelNotification(identifier: previousIdentifier) }
         persistSession()
         syncNotification()
@@ -83,6 +88,7 @@ final class FocusController: ObservableObject {
         now = currentTime
         let targetEnd = session.targetEnd
         if session.reconcile(at: currentTime) {
+            awaitingAcknowledgement = session.kind
             persistSession()
             recordCompletedFocus(session)
             syncNotification()
@@ -322,7 +328,7 @@ final class FocusController: ObservableObject {
     }
 
     private func playCompletionSound(for kind: FocusSession.Kind, targetEnd: Date, at currentTime: Date) {
-        guard settings.soundsEnabled, !settings.notificationsEnabled,
+        guard settings.soundsEnabled,
               currentTime.timeIntervalSince(targetEnd) <= 5 else { return }
         do {
             try sounds?.play(kind == .focus ? .focusCompleted : .breakCompleted, enabled: true)

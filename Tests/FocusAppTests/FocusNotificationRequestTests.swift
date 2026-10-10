@@ -6,7 +6,7 @@ import UserNotifications
 final class FocusNotificationRequestTests: XCTestCase {
     private let now = Date(timeIntervalSince1970: 10_000)
 
-    func testRequestCarriesContentIdentifierAndSingleDefaultSoundTrigger() throws {
+    func testRequestCarriesContentIdentifierAndSilentTrigger() throws {
         let request = try SystemFocusNotificationClient.makeRequest(
             identifier: "focus-session",
             title: "Focus done",
@@ -18,7 +18,7 @@ final class FocusNotificationRequestTests: XCTestCase {
         XCTAssertEqual(request.identifier, "focus-session")
         XCTAssertEqual(request.content.title, "Focus done")
         XCTAssertEqual(request.content.body, "Time for a break")
-        XCTAssertEqual(request.content.sound, .default)
+        XCTAssertNil(request.content.sound)
         let trigger = try XCTUnwrap(request.trigger as? UNTimeIntervalNotificationTrigger)
         XCTAssertEqual(trigger.timeInterval, 25, accuracy: 0.001)
         XCTAssertFalse(trigger.repeats)

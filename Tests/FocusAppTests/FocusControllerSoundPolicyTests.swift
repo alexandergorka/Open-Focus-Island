@@ -89,23 +89,19 @@ final class FocusControllerSoundPolicyTests: XCTestCase {
         XCTAssertTrue(expiredPlayer.events.isEmpty)
     }
 
-    func testNotificationsSuppressAppPlayerAndDisabledNotificationsAllowIt() throws {
-        let (store, defaults) = makeStore()
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        try store.saveSettings(FocusSettings(focusDuration: 1, notificationsEnabled: true, soundsEnabled: true))
-        let clock = SoundPolicyClock(Date(timeIntervalSince1970: 60_000))
-        let player = FakePolicyPlayer()
-        let controller = FocusController(store: store, now: { clock.date }, sounds: player)
-        controller.start(kind: .focus)
-        clock.date = try XCTUnwrap(controller.session.targetEnd)
-        controller.tick()
-        XCTAssertTrue(player.events.isEmpty)
-
-        controller.setNotificationsEnabled(false)
-        controller.start(kind: .focus)
-        clock.date = try XCTUnwrap(controller.session.targetEnd)
-        controller.tick()
-        XCTAssertEqual(player.events, [.focusCompleted])
+    func testAppSoundPlaysOnceRegardlessOfNotifications() throws {
+        for notificationsEnabled in [true, false] {
+            let (store, defaults) = makeStore()
+            defer { defaults.removePersistentDomain(forName: suiteName) }
+            try store.saveSettings(FocusSettings(focusDuration: 1, notificationsEnabled: notificationsEnabled, soundsEnabled: true))
+            let clock = SoundPolicyClock(Date(timeIntervalSince1970: 60_000))
+            let player = FakePolicyPlayer()
+            let controller = FocusController(store: store, now: { clock.date }, sounds: player)
+            controller.start(kind: .focus)
+            clock.date = try XCTUnwrap(controller.session.targetEnd)
+            controller.tick()
+            XCTAssertEqual(player.events, [.focusCompleted], "notificationsEnabled=\(notificationsEnabled)")
+        }
     }
 
     func testNaturalPauseKindsMapToBreakAndManualTransitionsStaySilent() throws {

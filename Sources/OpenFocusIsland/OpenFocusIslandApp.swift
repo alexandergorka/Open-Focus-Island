@@ -54,11 +54,12 @@ private let menuBarSymbol: NSImage = {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let controller: FocusController
-    private var panel: FocusPanel?
+    private(set) var panel: FocusPanel?
     private var historyWindow: FocusHistoryWindow?
     private var timer: Timer?
     private var observers: [NSObjectProtocol] = []
     private var sessionStateObserver: AnyCancellable?
+    private var wasAwaitingAcknowledgement = false
 
     override init() {
         controller = FocusController(notifications: SystemFocusNotificationClient(), sounds: SessionSoundPlayer())
@@ -86,8 +87,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.hidesWhenIdle = true
         panel.startMousePassThrough()
         // @Published sendet synchron auf dem Main-Thread; `state` ist bereits der neue Wert.
-        sessionStateObserver = controller.$session.map(\.state).removeDuplicates().sink { [weak panel] state in
-            MainActor.assumeIsolated { panel?.updateVisibility(for: state) }
+        sessionStateObserver = Publishers.CombineLatest(controller.$session.map(\.state), controller.$awaitingAcknowledgement)
+            .removeDuplicates { $0 == $1 }
+            .sink { [weak self, weak panel] state, awaiting in
+            MainActor.assumeIsolated {
+                guard let self, let panel else { return }
+                // Offene Bestätigung klappt die Karte auf, nach der Bestätigung wieder ein.
+                if awaiting != nil { panel.openControls() } else if self.wasAwaitingAcknowledgement { while panel.presentation != .compact { panel.setExpanded(false) } }
+                self.wasAwaitingAcknowledgement = awaiting != nil
+                panel.updateVisibility(for: state, acknowledgementPending: awaiting != nil)
+            }
         }
         controller.reconcileNotificationAuthorization()
 
@@ -221,6 +230,7 @@ final class FocusPanel: NSPanel {
     }
 
     override func cancelOperation(_ sender: Any?) {
+        if controller.awaitingAcknowledgement != nil { return controller.acknowledgeCompletion() }
         guard metrics.isExpanded else { return }
         setExpanded(false)
     }
@@ -258,17 +268,17 @@ final class FocusPanel: NSPanel {
     /// Zugeklappt und ohne laufende/pausierte Sitzung bleibt die Insel ausgeblendet; gestartet wird über die Menüleiste.
     var hidesWhenIdle = false
 
-    func updateVisibility(for state: FocusSession.State? = nil) {
+    func updateVisibility(for state: FocusSession.State? = nil, acknowledgementPending: Bool? = nil) {
         let state = state ?? controller.session.state
-        guard hidesWhenIdle, !metrics.isExpanded, state != .running, state != .paused else { return orderFrontRegardless() }
+        let pending = acknowledgementPending ?? (controller.awaitingAcknowledgement != nil)
+        guard hidesWhenIdle, !pending, !metrics.isExpanded, state != .running, state != .paused else { return orderFrontRegardless() }
         orderOut(nil)
     }
 
+    // Kein withAnimation um setFrame: sonst animiert NSHostingView das Fenster selbst (updateAnimatedWindowSize) und kämpft gegen uns.
     func openControls() {
-        withAnimation(reduceMotion() ? nil : .easeInOut(duration: Self.animationDuration)) {
-            metrics.presentation.openControls()
-            updateContentSize(metrics.expandedContentSize, animated: true)
-        }
+        metrics.presentation.openControls()
+        updateContentSize(metrics.expandedContentSize, animated: true)
         makeKeyAndOrderFront(nil)
     }
 
@@ -850,6 +860,7 @@ private struct FocusExpandedCard: View {
                 PanelExpandButton(title: "⌃", accessibilityLabel: controller.settings.language.t("Collapse", "Einklappen"), action: onCollapse)
                     .frame(width: 36, height: 48)
             }
+            if let kind = controller.awaitingAcknowledgement { CompletionAcknowledgementCard(controller: controller, kind: kind) }
             Text(timerText(controller.session, now: controller.now))
                 .font(.system(size: 42, weight: .medium, design: .rounded))
                 .monospacedDigit()
@@ -861,7 +872,8 @@ private struct FocusExpandedCard: View {
                 .accessibilityLabel(controller.settings.language.t("Session status", "Sitzungsstatus"))
                 .accessibilityValue(sessionDescription(controller.session, language: controller.settings.language))
 
-            if controller.session.state == .idle || controller.session.state == .completed {
+            if controller.awaitingAcknowledgement != nil {
+            } else if controller.session.state == .idle || controller.session.state == .completed {
                 TextField(controller.settings.language.t("What are you working on? (optional)", "Woran arbeitest du? (optional)"), text: $taskName)
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel(controller.settings.language.t("Task", "Aufgabe"))
@@ -883,6 +895,31 @@ private struct FocusExpandedCard: View {
                 .onChange(of: proxy.size) { _, size in onSize(CGSize(width: size.width + 20, height: size.height + 20)) }
         })
         .preferredColorScheme(.dark)
+    }
+}
+
+private struct CompletionAcknowledgementCard: View {
+    @ObservedObject var controller: FocusController
+    let kind: FocusSession.Kind
+
+    var body: some View {
+        let language = controller.settings.language
+        let gotIt = language.t("Got it", "Verstanden")
+        let next: FocusSession.Kind = kind == .focus ? controller.session.recommendedBreak : .focus
+        VStack(spacing: 8) {
+            Text(kind == .focus ? language.t("Focus complete", "Fokus abgeschlossen") : language.t("Break complete", "Pause abgeschlossen"))
+                .font(.system(size: 17, weight: .semibold))
+            HStack(spacing: 8) {
+                Button(gotIt) { controller.acknowledgeCompletion() }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                    .accessibilityLabel(gotIt)
+                Button(kind == .focus ? language.t("Start break", "Pause starten") : language.t("Start focus", "Fokus starten")) { controller.start(kind: next) }
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -1050,9 +1087,6 @@ private struct FocusSettingsForm: View {
             ))
             .font(.system(size: 12))
             .accessibilityLabel(controller.settings.language.t("Completion sounds", "Abschlusstöne"))
-            Text(controller.settings.language.t("Notifications use the system sound.", "Bei Benachrichtigungen wird der Systemton verwendet."))
-                .font(.system(size: 10))
-                .foregroundStyle(.secondary)
             Picker(controller.settings.language.t("Language", "Sprache"), selection: Binding(
                 get: { controller.settings.language },
                 set: { controller.setLanguage($0) }

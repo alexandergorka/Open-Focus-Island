@@ -32,7 +32,6 @@ final class SystemFocusNotificationClient: NSObject, FocusNotificationClient, UN
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = .default
         return UNNotificationRequest(
             identifier: identifier,
             content: content,
@@ -82,7 +81,7 @@ final class SystemFocusNotificationClient: NSObject, FocusNotificationClient, UN
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        completionHandler([.banner, .sound])
+        completionHandler([.banner, .list])
     }
 
     private enum RequestError: LocalizedError {
