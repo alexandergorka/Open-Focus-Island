@@ -1,0 +1,9 @@
+.build/
+.swiftpm/
+.DS_Store
+.drawio-tmp/
+
+# Internal development records, kept locally
+coordination/
+Tests/Evidence/
+IMPLEMENTATION.md
